@@ -1,0 +1,32 @@
+services:
+  lsy_franka:
+    build: .
+    container_name: lsy_franka_docker
+    
+    # == These commands defeat the purpose of isolation but simplify now early development ==
+    network_mode: "host"
+    ipc: "host"
+    pid: "host"
+    privileged: true
+    devices:
+      - "/dev/input:/dev/input"  # Mount input devices (needed for the keyboard library)
+    
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+    volumes:
+      - ~/.gitconfig:/etc/gitconfig:ro
+      - $HOME/.Xauthority:/root/.Xauthority 
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw 
+    environment:
+      QT_X11_NO_MITSHM: 1
+      DISPLAY: $DISPLAY
+      ROS_DOMAIN_ID: 100
+      RCUTILS_COLORIZED_OUTPUT: 1
+    cap_add:
+      - SYS_NICE
+    ulimits:
+      rtprio: 99
+      rttime: -1
+      memlock: 8428281856
+

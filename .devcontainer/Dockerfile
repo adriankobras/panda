@@ -1,0 +1,129 @@
+FROM ros:humble-perception
+ 
+SHELL ["/bin/bash", "-c"]
+
+# Create a non-root user
+ARG USERNAME=ros
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LIBFRANKA_VERSION=0.14.0
+ARG FRANKA_ROS2_VERSION=0.1.15
+
+# Delete existing user if it exists
+RUN if getent passwd ${USER_UID}; then \
+    userdel -r $(getent passwd ${USER_UID} | cut -d: -f1); \
+    fi
+
+# Delete existing group if it exists
+RUN if getent group ${USER_GID}; then \
+    groupdel $(getent group ${USER_GID} | cut -d: -f1); \
+    fi
+
+RUN groupadd --gid $USER_GID $USERNAME \
+  && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+  && mkdir /home/$USERNAME/.config && chown $USER_UID:$USER_GID /home/$USERNAME/.config
+
+# Set up sudo
+RUN apt-get update \
+  && apt-get install -y sudo \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+  && chmod 0440 /etc/sudoers.d/$USERNAME \
+  && rm -rf /var/lib/apt/lists/*
+
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    vim \
+    build-essential \
+    cmake \
+    wget \
+    git \
+    unzip \
+    pip \
+    python3-venv \
+    python3-ament-package \
+    python3-flake8 \
+    python3-rosdep \
+    python3-setuptools \
+    python3-vcstool \
+    python3-colcon-common-extensions \
+    python3-opencv \
+    cmake \
+    libpoco-dev \
+    libeigen3-dev \
+    dpkg \
+    ros-${ROS_DISTRO}-ackermann-msgs \
+    ros-${ROS_DISTRO}-ament-cmake \
+    ros-${ROS_DISTRO}-ament-cmake-clang-format \
+    ros-${ROS_DISTRO}-ament-cmake-clang-tidy \
+    ros-${ROS_DISTRO}-control-msgs \
+    ros-${ROS_DISTRO}-control-toolbox \
+    ros-${ROS_DISTRO}-controller-interface \
+    ros-${ROS_DISTRO}-controller-manager \
+    ros-${ROS_DISTRO}-gazebo-ros \
+    ros-${ROS_DISTRO}-generate-parameter-library \
+    ros-${ROS_DISTRO}-geometry-msgs \
+    ros-${ROS_DISTRO}-hardware-interface \
+    ros-${ROS_DISTRO}-hardware-interface-testing \
+    ros-${ROS_DISTRO}-joint-state-broadcaster \
+    ros-${ROS_DISTRO}-joint-state-publisher-gui \
+    ros-${ROS_DISTRO}-launch-testing \
+    ros-${ROS_DISTRO}-moveit \
+    ros-${ROS_DISTRO}-realtime-tools \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-control-test-assets \
+    ros-${ROS_DISTRO}-ros2-controllers \
+    ros-${ROS_DISTRO}-sensor-msgs \
+    ros-${ROS_DISTRO}-xacro 
+
+# === REALSENSE INSTALL ===
+RUN apt-get update \
+ && apt-get install -y \
+    ros-${ROS_DISTRO}-librealsense2* \
+    ros-${ROS_DISTRO}-realsense2-* \
+ && rm -rf /var/lib/apt/lists/*
+
+USER $USERNAME
+RUN mkdir -p /home/ros/ros2_ws/src
+WORKDIR /home/ros/ros2_ws/src
+SHELL ["/bin/bash", "-c"]
+
+# === FRANKA INSTALL ===
+WORKDIR /home/$USERNAME
+RUN mkdir -p ros2_ws/src
+
+RUN sudo apt-get update && sudo apt-get install -y \
+    ros-${ROS_DISTRO}-pinocchio
+
+# Install libfranka
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+    && git clone https://github.com/frankaemika/libfranka.git \
+    && cd libfranka \
+    && git checkout $LIBFRANKA_VERSION \
+    && git submodule init \ 
+    && git submodule update \
+    && mkdir build && cd build \
+    && cmake -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF  .. \
+    && cmake --build . \
+    && cpack -G DEB \
+    && sudo dpkg -i libfranka*.deb 
+WORKDIR /home/$USERNAME/ros2_ws
+
+RUN git clone https://github.com/frankaemika/franka_description.git src/franka_description \
+ && git clone -b v${FRANKA_ROS2_VERSION} https://github.com/frankaemika/franka_ros2.git src/franka_ros2
+
+RUN touch src/franka_ros2/franka_gazebo/COLCON_IGNORE
+
+# === VICON INSTALL ===
+RUN git clone https://github.com/OPT4SMART/ros2-vicon-receiver src/vicon_receiver \
+ && sed -i 's/hostname = "192.168.1.1"/hostname = "10.157.163.191"/' src/vicon_receiver/vicon_receiver/launch/client.launch.py \
+ && cd src/vicon_receiver \
+ && ./install_libs.sh
+
+# RUN source /opt/ros/${ROS_DISTRO}/setup.bash && source /home/${USERNAME}/ros2_ws/install/setup.bash \
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+ && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+# Create colcon ignore files to not compile these never again
+RUN cd src && for d in $(ls); do touch $d/COLCON_IGNORE; done

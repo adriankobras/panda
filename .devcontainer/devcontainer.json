@@ -1,0 +1,25 @@
+{
+    "name": "LSY Franka",
+    "remoteUser": "ros",
+    "dockerComposeFile": "./docker-compose.yaml",
+    "workspaceFolder": "/home/ros/ros2_ws/src/lsy_franka",
+    "service": "lsy_franka",
+    "features": {
+        "ghcr.io/duduribeiro/devcontainer-features/neovim:1": {
+            "version": "stable"
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        },
+        "ghcr.io/larsnieuwenhuizen/features/zellij:0": {
+            "version": "0.0.4"
+        },
+        "ghcr.io/devcontainers-extra/features/poetry:2": {}
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/home/ros/ros2_ws/src/lsy_franka,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/codeium.json,target=/home/ros/codeium.json,type=bind,consistency=cached"
+    ],
+    "postCreateCommand": "/bin/bash /home/ros/ros2_ws/src/lsy_franka/.devcontainer/post_create.bash"
+}
+
