@@ -13,7 +13,7 @@ import time
 import sys
 import os
 import pathlib
-from utils.numpy_to_zarr import numpy_to_zarr
+# from utils.numpy_to_zarr import numpy_to_zarr
 
 ROOT_DIR = str(pathlib.Path(__file__).parent.parent.parent)
 sys.path.append(ROOT_DIR)
@@ -107,7 +107,7 @@ class ImageVisualizer(Node):
         print(f"Dataset created with {len(self.dataset)} samples.")
 
         # Save the dataset to a zarr file
-        numpy_to_zarr(self.dataset, ROOT_DIR + '/demonstration_collection/dataset.zarr')
+        # numpy_to_zarr(self.dataset, ROOT_DIR + '/demonstration_collection/dataset.zarr')
 
     def visualize_images(self):
         """Function to visualize the images in the dataset"""
