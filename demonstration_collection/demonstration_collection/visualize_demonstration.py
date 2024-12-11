@@ -10,6 +10,14 @@ from rclpy.serialization import deserialize_message
 import rosbag2_py
 import cv2
 import time
+import sys
+import os
+import pathlib
+from utils.numpy_to_zarr import numpy_to_zarr
+
+ROOT_DIR = str(pathlib.Path(__file__).parent.parent.parent)
+sys.path.append(ROOT_DIR)
+os.chdir(ROOT_DIR)
 
 def get_time_from_msg(msg):
     return msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
@@ -31,7 +39,7 @@ class ImageVisualizer(Node):
         
         # Initialize rosbag reader
         self.reader = rosbag2_py.SequentialReader()
-        storage_options = rosbag2_py.StorageOptions(uri='/home/lsy1/ros2_ws/src/lsy_franka/demonstration_collection/rosbags/my_rosbag_0', storage_id='sqlite3')
+        storage_options = rosbag2_py.StorageOptions(uri=ROOT_DIR + '/demonstration_collection/rosbags/my_rosbag_0', storage_id='sqlite3')
         converter_options = rosbag2_py.ConverterOptions('', '')
         self.reader.open(storage_options, converter_options)
         
@@ -92,9 +100,14 @@ class ImageVisualizer(Node):
             ee_pose = get_pose_from_PoseStamped(self.ee_pose_msgs[ee_pose_idx])
             # vicon_pose = get_pose_from_Position(self.vicon_pose_msgs[vicon_pose_idx])
 
-            self.dataset.append((image, ee_pose, t - start_time))
+            self.dataset.append((image, ee_pose, t - start_time)) # 30Hz?
         
+        # Save the dataset to a file
+        np.save(ROOT_DIR + '/demonstration_collection/dataset.npy', self.dataset)
         print(f"Dataset created with {len(self.dataset)} samples.")
+
+        # Save the dataset to a zarr file
+        numpy_to_zarr(self.dataset, ROOT_DIR + '/demonstration_collection/dataset.zarr')
 
     def visualize_images(self):
         """Function to visualize the images in the dataset"""

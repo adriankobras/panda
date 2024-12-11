@@ -120,6 +120,7 @@ class Subscriber(Node):
     #             '/vicon/cf12/cf12',
     #             serialize_message(msg),
     #             self.get_clock().now().to_msg().sec)
+            
 
 def main(args=None):
     rclpy.init(args=args)
