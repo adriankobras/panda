@@ -9,6 +9,6 @@ _wandb
 
 **/.DS_Store
 
-test/
+test.zarr
 ros2_env/
 *.npy

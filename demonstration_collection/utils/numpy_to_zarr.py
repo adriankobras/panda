@@ -10,7 +10,7 @@ os.chdir(ROOT_DIR)
 
 from demonstration_collection.utils.replay_buffer import ReplayBuffer
 
-def numpy_to_zarr(output='test', render_size=320, control_hz=10):
+def numpy_to_zarr(output='test.zarr', render_size=320, control_hz=10):
     # load numpy dataset
     dataset = np.load('demonstration_collection/dataset.npy', allow_pickle=True)
     
@@ -20,10 +20,10 @@ def numpy_to_zarr(output='test', render_size=320, control_hz=10):
     clock = pygame.time.Clock()
     
     # episode-level while loop
-    for _ in range(1):
+    for _i in range(1):
         episode = list()
         # record in seed order, starting with 0
-        seed = 1
+        seed = _i
         print(f'starting seed {seed}')
         
         # step-level loop
@@ -31,7 +31,15 @@ def numpy_to_zarr(output='test', render_size=320, control_hz=10):
 
             img = dataset[i,0]
             state = dataset[i,1]
-            action = 0
+            action = dataset[i,1]
+
+            # img = pygame.transform.scale(pygame.surfarray.make_surface(img), (96, 96))
+            # img = pygame.surfarray.array3d(img)
+
+            # dummy test data
+            img = np.random.randint(0, 256, (240, 320, 3), dtype=np.uint8)
+            # state = np.zeros(7)
+            # action = np.zeros(7)
             
             data = {
                 'img': img, # (96, 96, 3), uint8

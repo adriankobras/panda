@@ -4,7 +4,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import PoseStamped
-# from vicon_receiver.msg import Position
+from vicon_receiver.msg import Position
 from cv_bridge import CvBridge
 from rclpy.serialization import deserialize_message
 import rosbag2_py
