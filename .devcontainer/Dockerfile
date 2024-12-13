@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 
 # Create a non-root user
 ARG USERNAME=ros
-ARG USER_UID=1001
+ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LIBFRANKA_VERSION=0.14.0
@@ -84,6 +84,12 @@ RUN apt-get update \
     ros-${ROS_DISTRO}-realsense2-* \
  && rm -rf /var/lib/apt/lists/*
 
+# Install tf2 and tf2-ros
+RUN sudo apt-get update && sudo apt-get install -y \
+    ros-${ROS_DISTRO}-tf2 \
+    ros-${ROS_DISTRO}-tf2-ros \
+    ros-${ROS_DISTRO}-tf-transformations
+
 USER $USERNAME
 RUN mkdir -p /home/ros/ros2_ws/src
 WORKDIR /home/ros/ros2_ws/src
@@ -107,7 +113,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
     && cmake -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF  .. \
     && cmake --build . \
     && cpack -G DEB \
-    && sudo dpkg -i libfranka*.deb 
+    && sudo dpkg -i libfranka*.deb
 WORKDIR /home/$USERNAME/ros2_ws
 
 RUN git clone https://github.com/frankaemika/franka_description.git src/franka_description \

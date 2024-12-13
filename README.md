@@ -26,3 +26,4 @@ This repository contains code for teleoperation using Franka Emika FR3 robot.
 - Set domain id on laptop to be the same as on desktop: export ROS_DOMAIN_ID=100 (check with echo $ROS_DOMAIN_ID)
 - Listen to topic with: ros2 topic echo /franka_robot_state_broadcaster/current_pose (or /camera/camera/color/image_rect_raw/compressed)
 
+ 
