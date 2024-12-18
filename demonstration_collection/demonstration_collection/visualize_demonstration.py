@@ -4,7 +4,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import PoseStamped
-from vicon_receiver.msg import Position
+# from vicon_receiver.msg import Position
 from cv_bridge import CvBridge
 from rclpy.serialization import deserialize_message
 import rosbag2_py
@@ -59,6 +59,12 @@ class ImageVisualizer(Node):
     def get_messages(self):
         while self.reader.has_next():
             topic, msg, t = self.reader.read_next()
+            if topic == '/camera/camera/color/image_rect_raw':
+                if isinstance(msg, bytes):
+                    msg = deserialize_message(msg, Image)
+                self.image_msgs.append(msg)
+                self.image_msgs_timestamps.append(get_time_from_msg(msg))
+                self.image_count += 1
             if topic == '/camera/camera/color/image_rect_raw/compressed':
                 if isinstance(msg, bytes):
                     msg = deserialize_message(msg, CompressedImage)
@@ -87,10 +93,14 @@ class ImageVisualizer(Node):
         """Function to create a dataset from the collected messages"""
         # Create a dataset from the collected messages
         self.dataset = []
+        if not self.image_msgs:
+            self.get_logger().error('No image messages collected.')
+            return
+        
         start_time = self.image_msgs[0].header.stamp.sec + self.image_msgs[0].header.stamp.nanosec * 1e-9
         for i in range(self.image_count):
-            # image = self.bridge.imgmsg_to_cv2(self.image_msgs[i], desired_encoding='bgr8') # Image
-            image = cv2.imdecode(np.frombuffer(self.image_msgs[i].data, np.uint8), cv2.IMREAD_COLOR) # CompressedImage
+            image = self.bridge.imgmsg_to_cv2(self.image_msgs[i], desired_encoding='bgr8') # Image
+            # image = cv2.imdecode(np.frombuffer(self.image_msgs[i].data, np.uint8), cv2.IMREAD_COLOR) # CompressedImage
             t = self.image_msgs[i].header.stamp.sec + self.image_msgs[i].header.stamp.nanosec * 1e-9 
             
             # Get ee_pose and vicon_pose messages based on the timestamp
