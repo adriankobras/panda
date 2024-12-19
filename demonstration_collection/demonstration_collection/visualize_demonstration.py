@@ -99,8 +99,8 @@ class ImageVisualizer(Node):
         
         start_time = self.image_msgs[0].header.stamp.sec + self.image_msgs[0].header.stamp.nanosec * 1e-9
         for i in range(self.image_count):
-            image = self.bridge.imgmsg_to_cv2(self.image_msgs[i], desired_encoding='bgr8') # Image
-            # image = cv2.imdecode(np.frombuffer(self.image_msgs[i].data, np.uint8), cv2.IMREAD_COLOR) # CompressedImage
+            # image = self.bridge.imgmsg_to_cv2(self.image_msgs[i], desired_encoding='bgr8') # Image
+            image = cv2.imdecode(np.frombuffer(self.image_msgs[i].data, np.uint8), cv2.IMREAD_COLOR) # CompressedImage
             t = self.image_msgs[i].header.stamp.sec + self.image_msgs[i].header.stamp.nanosec * 1e-9 
             
             # Get ee_pose and vicon_pose messages based on the timestamp
@@ -130,7 +130,7 @@ class ImageVisualizer(Node):
             cv2.waitKey(1)  # Wait for 1 ms to display the image
             
             # Optional: pause between images to see them clearly
-            time.sleep(0.5)
+            time.sleep(0.05)
 
         # Wait for any key press to close all images
         cv2.waitKey(0)

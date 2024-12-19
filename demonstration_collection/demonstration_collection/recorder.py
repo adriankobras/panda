@@ -4,6 +4,7 @@ from geometry_msgs.msg import PoseStamped  # You can replace this with the appro
 from sensor_msgs.msg import Image  # You can replace this with the appropriate message type
 from sensor_msgs.msg import CompressedImage
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Int32
 # from vicon_receiver.msg import Position
 from rclpy.node import Node
 from rclpy.serialization import serialize_message
@@ -45,17 +46,17 @@ class Subscriber(Node):
         """
         
         # Subscribers for two topics
-        self.image_subscriber = self.create_subscription(
-            Image,
-            '/camera/camera/color/image_rect_raw',  # Image data
-            self.image_callback,
-            10)
-        
-        # self.image_subscriber_compressed = self.create_subscription(
-        #     CompressedImage,
-        #     '/camera/camera/color/image_rect_raw/compressed',  # Image data
-        #     self.image_callback_compressed,
+        # self.image_subscriber = self.create_subscription(
+        #     Image,
+        #     '/camera/camera/color/image_rect_raw',  # Image data
+        #     self.image_callback,
         #     10)
+        
+        self.image_subscriber_compressed = self.create_subscription(
+            CompressedImage,
+            '/camera/camera/color/image_rect_raw/compressed',  # Image data
+            self.image_callback_compressed,
+            10)
         
         self.ee_subscriber = self.create_subscription(
             PoseStamped,
@@ -63,13 +64,23 @@ class Subscriber(Node):
             self.ee_pose_callback,
             10)
         
-        self.get_logger().info('Subscriptions initialized.')
+        self.ee_target_subscriber = self.create_subscription(
+            PoseStamped,
+            '/target_pose',
+            self.ee_target_pose_callback,
+            10)
         
-        # self.gripper_subscriber = self.create_subscription(
-        #     JointState,
-        #     '/fr3_gripper/joint_states',
-        #     self.gripper_state_callback,
-        #     10)
+        self.gripper_state_subscriber = self.create_subscription(
+            JointState,
+            '/fr3_gripper/joint_states',
+            self.gripper_state_callback,
+            10)
+        
+        self.gripper_action_subscriber = self.create_subscription(
+            Int32,
+            '/gripper_action',
+            self.gripper_action_callback,
+            10)
         
         # self.vicon_subscriber = self.create_subscription(
         #     Position,
@@ -96,35 +107,47 @@ class Subscriber(Node):
         converter_options = rosbag2_py.ConverterOptions('', '')
         self.bag_writer.open(storage_options, converter_options)
         
-        topic_info_image = rosbag2_py.TopicMetadata(
-            name='/camera/camera/color/image_rect_raw',
-            type='sensor_msgs/msg/Image',#'sensor_msgs/msg/CompressedImage',
-            serialization_format='cdr'
-        )
-        # topic_info_compressed_image = rosbag2_py.TopicMetadata(
-        #     name='/camera/camera/color/image_rect_raw/compressed',
-        #     type='sensor_msgs/msg/CompressedImage',
+        # topic_info_image = rosbag2_py.TopicMetadata(
+        #     name='/camera/camera/color/image_rect_raw',
+        #     type='sensor_msgs/msg/Image',#'sensor_msgs/msg/CompressedImage',
         #     serialization_format='cdr'
         # )
+        topic_info_compressed_image = rosbag2_py.TopicMetadata(
+            name='/camera/camera/color/image_rect_raw/compressed',
+            type='sensor_msgs/msg/CompressedImage',
+            serialization_format='cdr'
+        )
         topic_info_eepose = rosbag2_py.TopicMetadata(
             name='/franka_robot_state_broadcaster/current_pose',
             type='geometry_msgs/msg/PoseStamped',
             serialization_format='cdr'
         )
-        # topic_info_gripperstate = rosbag2_py.TopicMetadata(
-        #     name='/fr3_gripper/joint_states',
-        #     type='sensor_msgs/msg/JointState',
-        #     serialization_format='cdr'
-        # )
+        topic_info_eetargetpose = rosbag2_py.TopicMetadata(
+            name='/target_pose',
+            type='geometry_msgs/msg/PoseStamped',
+            serialization_format='cdr'
+        )
+        topic_info_gripperstate = rosbag2_py.TopicMetadata(
+            name='/fr3_gripper/joint_states',
+            type='sensor_msgs/msg/JointState',
+            serialization_format='cdr'
+        )
+        topic_info_gripperaction = rosbag2_py.TopicMetadata(
+            name='/gripper_action',
+            type='std_msgs/msg/Int32',
+            serialization_format='cdr'
+        )
         # topic_info_viconpose = rosbag2_py.TopicMetadata(
         #     name='/vicon/cf12/cf12',
         #     type='vicon_receiver/msg/Position',
         #     serialization_format='cdr'
         # )
-        self.bag_writer.create_topic(topic_info_image)
-        # self.bag_writer.create_topic(topic_info_compressed_image)
+        # self.bag_writer.create_topic(topic_info_image)
+        self.bag_writer.create_topic(topic_info_compressed_image)
         self.bag_writer.create_topic(topic_info_eepose)
-        # self.bag_writer.create_topic(topic_info_gripperstate)
+        self.bag_writer.create_topic(topic_info_eetargetpose)
+        self.bag_writer.create_topic(topic_info_gripperstate)
+        self.bag_writer.create_topic(topic_info_gripperaction)
         # self.bag_writer.create_topic(topic_info_viconpose)
 
         self.get_logger().info(f'Started recording to {rosbag_dir}')
@@ -139,7 +162,6 @@ class Subscriber(Node):
             self.rosbag_index += 1
 
     def image_callback(self, msg):
-        self.get_logger().info(f'Image callback triggered: {msg}')
         if self.recording:
             self.bag_writer.write(
                 '/camera/camera/color/image_rect_raw',
@@ -147,6 +169,7 @@ class Subscriber(Node):
                 self.get_clock().now().to_msg().sec)
             
     def image_callback_compressed(self, msg):
+        self.get_logger().info('Image callback', throttle_duration_sec=1.0)
         if self.recording:
             self.bag_writer.write(
                 '/camera/camera/color/image_rect_raw/compressed',
@@ -154,18 +177,35 @@ class Subscriber(Node):
                 self.get_clock().now().to_msg().sec)
 
     def ee_pose_callback(self, msg):
-        # self.get_logger().info(f'EE Pose callback triggered: {msg}')
+        self.get_logger().info('EE Pose callback', throttle_duration_sec=1.0)
         if self.recording:
             self.bag_writer.write(
                 '/franka_robot_state_broadcaster/current_pose',
                 serialize_message(msg),
                 self.get_clock().now().to_msg().sec)
+            
+    def ee_target_pose_callback(self, msg):
+        self.get_logger().info('EE Target Pose callback', throttle_duration_sec=1.0)
+        if self.recording:
+            self.bag_writer.write(
+                '/target_pose',
+                serialize_message(msg),
+                self.get_clock().now().to_msg().sec)
     
     def gripper_state_callback(self, msg):
+        self.get_logger().info('Gripper State callback', throttle_duration_sec=1.0)
         width = msg.position[0] + msg.position[1]
         if self.recording:
             self.bag_writer.write(
                 '/fr3_gripper/joint_states',
+                serialize_message(msg),
+                self.get_clock().now().to_msg().sec)
+            
+    def gripper_action_callback(self, msg):
+        self.get_logger().info('Gripper Action callback', throttle_duration_sec=1.0)
+        if self.recording:
+            self.bag_writer.write(
+                '/gripper_action',
                 serialize_message(msg),
                 self.get_clock().now().to_msg().sec)
     

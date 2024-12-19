@@ -2,23 +2,41 @@ rosbag2_bagfile_information:
   version: 5
   storage_identifier: sqlite3
   duration:
-    nanoseconds: 4
+    nanoseconds: 24
   starting_time:
-    nanoseconds_since_epoch: 1734529803
-  message_count: 16
+    nanoseconds_since_epoch: 1734628613
+  message_count: 28915
   topics_with_message_count:
+    - topic_metadata:
+        name: /fr3_gripper/joint_states
+        type: sensor_msgs/msg/JointState
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 376
+    - topic_metadata:
+        name: /gripper_action
+        type: std_msgs/msg/Int32
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 2
+    - topic_metadata:
+        name: /target_pose
+        type: geometry_msgs/msg/PoseStamped
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 4669
     - topic_metadata:
         name: /franka_robot_state_broadcaster/current_pose
         type: geometry_msgs/msg/PoseStamped
         serialization_format: cdr
         offered_qos_profiles: ""
-      message_count: 8
+      message_count: 23168
     - topic_metadata:
-        name: /camera/camera/color/image_rect_raw
-        type: sensor_msgs/msg/Image
+        name: /camera/camera/color/image_rect_raw/compressed
+        type: sensor_msgs/msg/CompressedImage
         serialization_format: cdr
         offered_qos_profiles: ""
-      message_count: 8
+      message_count: 700
   compression_format: ""
   compression_mode: ""
   relative_file_paths:
@@ -26,7 +44,7 @@ rosbag2_bagfile_information:
   files:
     - path: my_rosbag_0_0.db3
       starting_time:
-        nanoseconds_since_epoch: 1734529803
+        nanoseconds_since_epoch: 1734628613
       duration:
-        nanoseconds: 4
-      message_count: 16
+        nanoseconds: 24
+      message_count: 28915
