@@ -10,7 +10,7 @@ os.chdir(ROOT_DIR)
 
 from demonstration_collection.utils.replay_buffer import ReplayBuffer
 
-def numpy_to_zarr(output='test.zarr', render_size=320, control_hz=10):
+def numpy_to_zarr(output='testt.zarr', render_size=320, control_hz=10):
     # load numpy dataset
     dataset = np.load('demonstration_collection/dataset.npy', allow_pickle=True)
     

@@ -4,7 +4,8 @@ from geometry_msgs.msg import PoseStamped  # You can replace this with the appro
 from sensor_msgs.msg import Image  # You can replace this with the appropriate message type
 from sensor_msgs.msg import CompressedImage
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Int32
+# from std_msgs.msg import Int32
+from geometry_msgs.msg import PointStamped
 # from vicon_receiver.msg import Position
 from rclpy.node import Node
 from rclpy.serialization import serialize_message
@@ -77,7 +78,7 @@ class Subscriber(Node):
             10)
         
         self.gripper_action_subscriber = self.create_subscription(
-            Int32,
+            PointStamped,
             '/gripper_action',
             self.gripper_action_callback,
             10)
@@ -134,7 +135,7 @@ class Subscriber(Node):
         )
         topic_info_gripperaction = rosbag2_py.TopicMetadata(
             name='/gripper_action',
-            type='std_msgs/msg/Int32',
+            type='geometry_msgs/msg/PointStamped',
             serialization_format='cdr'
         )
         # topic_info_viconpose = rosbag2_py.TopicMetadata(

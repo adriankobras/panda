@@ -1,0 +1,50 @@
+rosbag2_bagfile_information:
+  version: 5
+  storage_identifier: sqlite3
+  duration:
+    nanoseconds: 22
+  starting_time:
+    nanoseconds_since_epoch: 1734705615
+  message_count: 27998
+  topics_with_message_count:
+    - topic_metadata:
+        name: /fr3_gripper/joint_states
+        type: sensor_msgs/msg/JointState
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 318
+    - topic_metadata:
+        name: /gripper_action
+        type: geometry_msgs/msg/PointStamped
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 2
+    - topic_metadata:
+        name: /target_pose
+        type: geometry_msgs/msg/PoseStamped
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 4522
+    - topic_metadata:
+        name: /franka_robot_state_broadcaster/current_pose
+        type: geometry_msgs/msg/PoseStamped
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 22478
+    - topic_metadata:
+        name: /camera/camera/color/image_rect_raw/compressed
+        type: sensor_msgs/msg/CompressedImage
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 678
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - my_rosbag_2_0.db3
+  files:
+    - path: my_rosbag_2_0.db3
+      starting_time:
+        nanoseconds_since_epoch: 1734705615
+      duration:
+        nanoseconds: 22
+      message_count: 27998
